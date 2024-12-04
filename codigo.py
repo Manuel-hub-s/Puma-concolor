@@ -154,20 +154,35 @@ if provincias is not None:
         datos_filtrados_agrupados.groupby('Provincia')['Total avistamientos'].sum()
     ).fillna(0)
 
+    # Opciones de mapas base
+    mapas_base = {
+        "OpenStreetMap": "openstreetmap",
+        "Stamen Toner": "stamentoner",
+        "Stamen Watercolor": "stamenwatercolor",
+        "CartoDB Positron": "cartodbpositron",
+    }
+
+    # Selector de mapas base
+    mapa_base_seleccionado = st.sidebar.selectbox(
+        "Selecciona el mapa base:",
+        list(mapas_base.keys())
+    )
+
     try:
-        # Crear el mapa interactivo
+        # Crear el mapa interactivo con el mapa base seleccionado
         m_totales = provincias.explore(
             column='Total avistamientos',
             cmap='OrRd',
             tooltip=['provincia', 'Total avistamientos'],
             legend=True,
+            basemap=mapas_base[mapa_base_seleccionado],  # Usar el mapa base seleccionado
             legend_kwds={
                 'caption': f"Total de avistamientos de Puma concolor en {provincia_seleccionada}",
                 'orientation': "horizontal"
             }
         )
         st.subheader(f'Total de avistamientos de Puma concolor en {provincia_seleccionada if provincia_seleccionada != "Todas" else "Costa Rica"}')
-        st_folium(m_totales, width=1000, height=1000)
+        st_folium(m_totales, width=700, height=600)
     except Exception as e:
         st.error(f"Error al generar el mapa interactivo: {e}")
 else:
