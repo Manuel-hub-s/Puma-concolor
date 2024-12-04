@@ -6,8 +6,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import geopandas as gpd
-import matplotlib.pyplot as plt
-from streamlit_folium import folium_static, st_folium
+from streamlit_folium import st_folium
 
 # %%
 # Rutas de los datos
@@ -24,17 +23,20 @@ st.subheader('Manuel Peralta Reyes')
 @st.cache_data
 def cargar_Puma_concolor():
     try:
+        # Cargar datos del CSV
         Pumaconcolor = pd.read_csv(Puma_concolor, delimiter="\t")
-        
+        # Limpiar nombres de columnas
         Pumaconcolor.columns = Pumaconcolor.columns.str.strip()
-        
-        # Corrección nombres provincias
+        # Corrección de nombres de provincias
         if 'Provincia' in Pumaconcolor.columns:
             Pumaconcolor['Provincia'] = Pumaconcolor['Provincia'].replace({
                 "Limon": "Limón",
                 "San Jose": "San José"
             })
-        
+        return Pumaconcolor
+    except Exception as e:
+        st.error(f"Error al cargar el archivo CSV: {e}")
+        return None
 
 # %% [markdown]
 # ## Función para cargar datos geoespaciales
@@ -43,67 +45,74 @@ def cargar_Puma_concolor():
 def cargar_lim_provincias():
     try:
         provincias = gpd.read_file(lim_provincias)
+        # Verificar y configurar CRS
         if provincias.crs is None:
             provincias.set_crs("EPSG:4326", inplace=True)
         return provincias
-    except Exception as e:  # Aquí faltaba un espacio para alinear correctamente
-        st.error(f"Error: {e}")
+    except Exception as e:
+        st.error(f"Error al cargar los datos geoespaciales: {e}")
+        return None
+
+# %% [markdown]
+# ## Función para agrupar por provincia
+
+@st.cache_data
+def agrupar_por_provincia(Pumaconcolor):
+    try:
+        # Agrupar datos
+        agrupado = Pumaconcolor.groupby('Provincia')['Cuenta Individual'].sum().reset_index()
+        agrupado.rename(columns={'Cuenta Individual': 'Total avistamientos'}, inplace=True)
+        return agrupado
+    except KeyError:
+        st.error("La columna 'Cuenta Individual' no se encontró en los datos.")
         return None
 
 # %% [markdown]
 # ## Cargar los datos
 
-# Cargar datos de Puma
-Pum_concolor = cargar_Puma_concolor()
+# Cargar datos de Puma concolor
+Pumaconcolor = cargar_Puma_concolor()
+
+# Verificar si los datos fueron cargados correctamente
+if Pumaconcolor is None:
+    st.stop()
 
 # Cargar datos geoespaciales de las provincias
-carga_provincias = st.text('Cargando datos de los límites de las provincias...')
 provincias = cargar_lim_provincias()
-carga_provincias.text('Los límites de las provincias han sido cargados.')
 
-#if provinciasCR is not None:
-    st.write("Columnas disponibles en provinciasCR:", provinciasCR.columns.tolist())
-else:
-    st.error("No se pudieron cargar las provincias.")
+# Verificar si los datos geoespaciales fueron cargados correctamente
+if provincias is None:
     st.stop()
 
 # %% [markdown]
 # ## Agrupamiento por provincia
 
-@st.cache_data
-def Puma_provincia(Pum_concolor):
-    agrupado =Pum_concolor.groupby('Provincia')['Cuenta Individual'].sum().reset_index()
-    agrupado.rename(columns={'Cuenta Individual': 'Total avistamientos'}, inplace=True)
-    return agrupado
+# Agrupar datos por provincia
+agrupado_Pumaconcolor = agrupar_por_provincia(Pumaconcolor)
 
-# Agrupamiento por provincia
-agrup_Pum_concolor = agrupar_por_provincia(Pum_concolor)
-
-# Mostrar los totales por provincia
-#st.subheader('Totales por provincia')
-#st.dataframe(agrup_Pum_concolor)
+if agrupado_Pumaconcolor is None:
+    st.stop()
 
 # %% [markdown]
 # ## Seleccionador por Provincia
 
-# Generar la lista de provincias y agregar "Todas"
-Puma_prov = agrup_Pum_concolor['Provincia'].tolist()
-Puma_prov.sort()
-opciones_provincias = ['Todas'] + Puma_prov
+# Crear lista de provincias para el selector
+provincias_lista = agrupado_Pumaconcolor['Provincia'].tolist()
+provincias_lista.sort()
+opciones_provincias = ['Todas'] + provincias_lista
 
 provincia_seleccionada = st.sidebar.selectbox(
     'Selecciona una provincia:',
     opciones_provincias
 )
 
-# Filtrar los datos según la selección
+# Filtrar los datos según la provincia seleccionada
 if provincia_seleccionada != 'Todas':
-    datos_filtrados = Pum_concolor[Pum_concolor['Provincia'] == provincia_seleccionada]
-    datos_filtrados_agrupados = Pum_concolor[Pum_concolor['Provincia'] == provincia_seleccionada
-    ]
+    datos_filtrados = Pumaconcolor[Pumaconcolor['Provincia'] == provincia_seleccionada]
+    datos_filtrados_agrupados = agrupado_Pumaconcolor[agrupado_Pumaconcolor['Provincia'] == provincia_seleccionada]
 else:
-    datos_filtrados = Pum_concolor.copy()
-    datos_filtrados_agrupados = Pum_concolor.copy()
+    datos_filtrados = Pumaconcolor.copy()
+    datos_filtrados_agrupados = agrupado_Pumaconcolor.copy()
 
 # Mostrar los datos filtrados
 st.subheader(f'Datos para la provincia {provincia_seleccionada}')
@@ -114,10 +123,10 @@ st.dataframe(datos_filtrados)
 
 graf = px.bar(
     datos_filtrados_agrupados,
-    x='Especie',
+    x='Provincia',
     y='Total avistamientos',
-    title=f'Totales de felinos para {provincia_seleccionada}',
-    labels={'Especie': 'Especie', 'Total avistamientos': 'Total'},
+    title=f'Totales de avistamientos en {provincia_seleccionada}',
+    labels={'Provincia': 'Provincia', 'Total avistamientos': 'Total de avistamientos'},
     color='Provincia'
 )
 st.plotly_chart(graf)
@@ -126,26 +135,27 @@ st.plotly_chart(graf)
 # ## Mapa de Totales por Provincia
 
 if provincias is not None:
+    # Vincular los datos con el GeoDataFrame
     provincias['Total avistamientos'] = provincias['provincia'].map(
         datos_filtrados_agrupados.set_index('Provincia')['Total avistamientos']
     ).fillna(0)
 
     try:
-        # Mapa
+        # Crear el mapa interactivo
         m_totales = provincias.explore(
             column='Total avistamientos',
-            name='Total avistamientos',
             cmap='OrRd',
-            tooltip=['provincia', 'Total Cuenta Individual'],
+            tooltip=['provincia', 'Total avistamientos'],
             legend=True,
             legend_kwds={
-                'caption': f"Total de avistamientos de Puma comcolor para  {provincia_seleccionada}",
+                'caption': f"Total de avistamientos de Puma concolor en {provincia_seleccionada}",
                 'orientation': "horizontal"
             }
         )
-        st.subheader(f'Total de avistamientos de Puma comcolor para {provincia_seleccionada if provincia_seleccionada != "Todas" else "Costa Rica"}')
-        st_folium(m_totales, width=1000, height=1000)
+        st.subheader(f'Total de avistamientos de Puma concolor en {provincia_seleccionada if provincia_seleccionada != "Todas" else "Costa Rica"}')
+        st_folium(m_totales, width=700, height=600)
     except Exception as e:
         st.error(f"Error al generar el mapa interactivo: {e}")
 else:
-    st.error("No se pudieron cargar los datos de provincias.")
+    st.error("No se pudieron cargar los datos geoespaciales.")
+
