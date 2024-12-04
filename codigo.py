@@ -160,20 +160,7 @@ if provincias is not None:
     try:
         # Crear el mapa base inicial (OpenStreetMap)
         mapa = folium.Map(location=[9.7489, -83.7534], zoom_start=7, tiles="openstreetmap")
-        
-        # Crear capas de mapas base adicionales
-        folium.TileLayer('cartodb positron').add_to(mapa)
-        folium.TileLayer('cartodb dark_matter').add_to(mapa)
-        folium.TileLayer('Stamen Terrain').add_to(mapa)
-        folium.TileLayer('Stamen Toner').add_to(mapa)
-        folium.TileLayer('Stamen Watercolor').add_to(mapa)
-
-        # Añadir la capa de mapa base de OpenStreetMap como predeterminada
-        folium.TileLayer('openstreetmap').add_to(mapa)
-        
-        # Añadir control de capas (permitiendo cambiar de mapa base)
-        folium.LayerControl().add_to(mapa)
-        
+               
         # Agregar los datos de provincias con los valores de avistamientos
         folium.Choropleth(
             geo_data=provincias,
@@ -187,6 +174,14 @@ if provincias is not None:
             legend_name='Total de Avistamientos'
         ).add_to(mapa)
 
+         # Crear capas de mapas base adicionales
+        folium.TileLayer('cartodb positron').add_to(mapa)
+        folium.TileLayer('cartodb dark_matter').add_to(mapa)
+        folium.TileLayer('Stamen Terrain').add_to(mapa)
+        
+        # Añadir control de capas (permitiendo cambiar de mapa base)
+        folium.LayerControl().add_to(mapa)
+        
         # Mostrar el mapa interactivo
         st.subheader(f'Total de avistamientos de Puma concolor en {provincia_seleccionada if provincia_seleccionada != "Todas" else "Costa Rica"}')
         st_folium(mapa, width=700, height=600)
