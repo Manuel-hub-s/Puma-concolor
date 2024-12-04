@@ -24,13 +24,11 @@ st.subheader('Manuel Peralta Reyes')
 @st.cache_data
 def cargar_Puma_concolor():
     try:
-        # Cargar el archivo CSV con tabulaciones como delimitador
         Pumaconcolor = pd.read_csv(Puma_concolor, delimiter="\t")
         
-        # Eliminar espacios adicionales de los nombres de las columnas
         Pumaconcolor.columns = Pumaconcolor.columns.str.strip()
         
-        # Reemplazar nombres de provincias para corregir inconsistencias
+        # Corrección nombres provincias
         if 'Provincia' in Pumaconcolor.columns:
             Pumaconcolor['Provincia'] = Pumaconcolor['Provincia'].replace({
                 "Limon": "Limón",
@@ -45,10 +43,12 @@ def cargar_Puma_concolor():
 def cargar_lim_provincias():
     try:
         provincias = gpd.read_file(lim_provincias)
-        # Verificar y configurar CRS si es necesario
         if provincias.crs is None:
             provincias.set_crs("EPSG:4326", inplace=True)
         return provincias
+     except Exception as e:
+        st.error(f"Error: {e}")
+        return None
 
 # %% [markdown]
 # ## Cargar los datos
