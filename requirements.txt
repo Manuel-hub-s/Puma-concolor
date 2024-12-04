@@ -1,0 +1,17 @@
+pip>=24.3.1
+setuptools
+streamlit>=1.4.0
+pandas
+plotly
+geopandas
+mapclassify
+numpy
+folium
+branca
+leafmap
+rasterio
+earthengine-api
+geemap
+matplotlib
+streamlit-folium
+folium==0.14.0
