@@ -57,9 +57,9 @@ def cargar_lim_provincias():
 Pum_concolor = cargar_Puma_concolor()
 
 # Cargar datos geoespaciales de las provincias
-carga_provinciasCR = st.text('Cargando datos de los límites de las provincias...')
-provinciasCR = cargar_lim_provincias()
-carga_provinciasCR.text('Los límites de las provincias han sido cargados.')
+carga_provincias = st.text('Cargando datos de los límites de las provincias...')
+provincias = cargar_lim_provincias()
+carga_provincias.text('Los límites de las provincias han sido cargados.')
 
 #if provinciasCR is not None:
     st.write("Columnas disponibles en provinciasCR:", provinciasCR.columns.tolist())
@@ -115,9 +115,9 @@ st.dataframe(datos_filtrados)
 graf = px.bar(
     datos_filtrados_agrupados,
     x='Especie',
-    y='Total Cuenta Individual',
+    y='Total avistamientos',
     title=f'Totales de felinos para {provincia_seleccionada}',
-    labels={'Especie': 'Especie', 'Total Cuenta Individual': 'Total'},
+    labels={'Especie': 'Especie', 'Total avistamientos': 'Total'},
     color='Provincia'
 )
 st.plotly_chart(graf)
@@ -125,26 +125,26 @@ st.plotly_chart(graf)
 # %% [markdown]
 # ## Mapa de Totales por Provincia
 
-if provinciasCR is not None:
-    provinciasCR['Total Cuenta Individual'] = provinciasCR['provincia'].map(
-        datos_filtrados_agrupados.set_index('Provincia')['Total Cuenta Individual']
+if provincias is not None:
+    provincias['Total avistamientos'] = provincias['provincia'].map(
+        datos_filtrados_agrupados.set_index('Provincia')['Total avistamientos']
     ).fillna(0)
 
     try:
-        # Crear el mapa cloroplético
-        m_totales = provinciasCR.explore(
-            column='Total Cuenta Individual',
-            name='Total Cuenta Individual',
-            cmap='YlGn',
+        # Mapa
+        m_totales = provincias.explore(
+            column='Total avistamientos',
+            name='Total avistamientos',
+            cmap='OrRd',
             tooltip=['provincia', 'Total Cuenta Individual'],
             legend=True,
             legend_kwds={
-                'caption': f"Totales de Ara ambiguus para {provincia_seleccionada}",
+                'caption': f"Total de avistamientos de Puma comcolor para  {provincia_seleccionada}",
                 'orientation': "horizontal"
             }
         )
-        st.subheader(f'Totales de Ara ambiguus en {provincia_seleccionada if provincia_seleccionada != "Todas" else "Costa Rica"}')
-        st_folium(m_totales, width=700, height=600)
+        st.subheader(f'Total de avistamientos de Puma comcolor para {provincia_seleccionada if provincia_seleccionada != "Todas" else "Costa Rica"}')
+        st_folium(m_totales, width=1000, height=1000)
     except Exception as e:
         st.error(f"Error al generar el mapa interactivo: {e}")
 else:
