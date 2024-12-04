@@ -177,7 +177,6 @@ if provincias is not None:
          # Crear capas de mapas base adicionales
         folium.TileLayer('cartodb positron').add_to(mapa)
         folium.TileLayer('cartodb dark_matter').add_to(mapa)
-        folium.TileLayer('Stamen Terrain').add_to(mapa)
         
         # Añadir control de capas (permitiendo cambiar de mapa base)
         folium.LayerControl().add_to(mapa)
