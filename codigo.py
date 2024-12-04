@@ -6,7 +6,10 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import geopandas as gpd
+import folium
 from streamlit_folium import st_folium
+from folium import plugins
+from folium import Map
 
 # %%
 # Rutas de los datos
@@ -154,35 +157,40 @@ if provincias is not None:
         datos_filtrados_agrupados.groupby('Provincia')['Total avistamientos'].sum()
     ).fillna(0)
 
-    # Opciones de mapas base
-    mapas_base = {
-        "OpenStreetMap": "openstreetmap",
-        "Stamen Toner": "stamentoner",
-        "Stamen Watercolor": "stamenwatercolor",
-        "CartoDB Positron": "cartodbpositron",
-    }
-
-    # Selector de mapas base
-    mapa_base_seleccionado = st.sidebar.selectbox(
-        "Selecciona el mapa base:",
-        list(mapas_base.keys())
-    )
-
     try:
-        # Crear el mapa interactivo con el mapa base seleccionado
-        m_totales = provincias.explore(
-            column='Total avistamientos',
-            cmap='OrRd',
-            tooltip=['provincia', 'Total avistamientos'],
-            legend=True,
-            basemap=mapas_base[mapa_base_seleccionado],  # Usar el mapa base seleccionado
-            legend_kwds={
-                'caption': f"Total de avistamientos de Puma concolor en {provincia_seleccionada}",
-                'orientation': "horizontal"
-            }
-        )
+        # Crear el mapa base inicial (OpenStreetMap)
+        mapa = folium.Map(location=[9.7489, -83.7534], zoom_start=7, tiles="openstreetmap")
+        
+        # Crear capas de mapas base adicionales
+        folium.TileLayer('cartodb positron').add_to(mapa)
+        folium.TileLayer('cartodb dark_matter').add_to(mapa)
+        folium.TileLayer('Stamen Terrain').add_to(mapa)
+        folium.TileLayer('Stamen Toner').add_to(mapa)
+        folium.TileLayer('Stamen Watercolor').add_to(mapa)
+
+        # Añadir la capa de mapa base de OpenStreetMap como predeterminada
+        folium.TileLayer('openstreetmap').add_to(mapa)
+        
+        # Añadir control de capas (permitiendo cambiar de mapa base)
+        folium.LayerControl().add_to(mapa)
+        
+        # Agregar los datos de provincias con los valores de avistamientos
+        folium.Choropleth(
+            geo_data=provincias,
+            name='Total avistamientos',
+            data=provincias,
+            columns=['provincia', 'Total avistamientos'],
+            key_on='feature.properties.provincia',  # Asegúrate de que el nombre de la provincia coincida en tus datos
+            fill_color='OrRd',
+            fill_opacity=0.7,
+            line_opacity=0.2,
+            legend_name='Total de Avistamientos'
+        ).add_to(mapa)
+
+        # Mostrar el mapa interactivo
         st.subheader(f'Total de avistamientos de Puma concolor en {provincia_seleccionada if provincia_seleccionada != "Todas" else "Costa Rica"}')
-        st_folium(m_totales, width=700, height=600)
+        st_folium(mapa, width=700, height=600)
+
     except Exception as e:
         st.error(f"Error al generar el mapa interactivo: {e}")
 else:
