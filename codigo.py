@@ -46,14 +46,14 @@ def cargar_lim_provincias():
         if provincias.crs is None:
             provincias.set_crs("EPSG:4326", inplace=True)
         return provincias
-     except Exception as e:
+    except Exception as e:  # Aquí faltaba un espacio para alinear correctamente
         st.error(f"Error: {e}")
         return None
 
 # %% [markdown]
 # ## Cargar los datos
 
-# Cargar datos de Ara ambiguus
+# Cargar datos de Puma
 Pum_concolor = cargar_Puma_concolor()
 
 # Cargar datos geoespaciales de las provincias
