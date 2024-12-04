@@ -60,11 +60,11 @@ def cargar_lim_provincias():
 def agrupar_por_provincia(Pumaconcolor):
     try:
         # Agrupar datos
-        agrupado = Pumaconcolor.groupby('Provincia')['Cuenta Individual'].sum().reset_index()
-        agrupado.rename(columns={'Cuenta Individual': 'Total avistamientos'}, inplace=True)
+        agrupado = Pumaconcolor.groupby('Provincia')['Cuenta individual'].sum().reset_index()
+        agrupado.rename(columns={'Cuenta individual': 'Total avistamientos'}, inplace=True)
         return agrupado
     except KeyError:
-        st.error("La columna 'Cuenta Individual' no se encontró en los datos.")
+        st.error("La columna 'Cuenta individual' no se encontró en los datos.")
         return None
 
 # %% [markdown]
