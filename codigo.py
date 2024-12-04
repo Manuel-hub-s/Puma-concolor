@@ -54,17 +54,17 @@ def cargar_lim_provincias():
         return None
 
 # %% [markdown]
-# ## Función para agrupar por provincia
+# ## Función para agrupar por provincia y especie
 
 @st.cache_data
-def agrupar_por_provincia(Pumaconcolor):
+def agrupar_por_provincia_y_especie(Pumaconcolor):
     try:
-        # Agrupar datos
-        agrupado = Pumaconcolor.groupby('Provincia')['Cuenta individual'].sum().reset_index()
+        # Agrupar datos por provincia y especie
+        agrupado = Pumaconcolor.groupby(['Provincia', 'Especie'])['Cuenta individual'].sum().reset_index()
         agrupado.rename(columns={'Cuenta individual': 'Total avistamientos'}, inplace=True)
         return agrupado
     except KeyError:
-        st.error("La columna 'Cuenta individual' no se encontró en los datos.")
+        st.error("No se encontraron las columnas necesarias en los datos.")
         return None
 
 # %% [markdown]
@@ -85,10 +85,10 @@ if provincias is None:
     st.stop()
 
 # %% [markdown]
-# ## Agrupamiento por provincia
+# ## Agrupamiento por provincia y especie
 
-# Agrupar datos por provincia
-agrupado_Pumaconcolor = agrupar_por_provincia(Pumaconcolor)
+# Agrupar datos por provincia y especie
+agrupado_Pumaconcolor = agrupar_por_provincia_y_especie(Pumaconcolor)
 
 if agrupado_Pumaconcolor is None:
     st.stop()
@@ -97,7 +97,7 @@ if agrupado_Pumaconcolor is None:
 # ## Seleccionador por Provincia
 
 # Crear lista de provincias para el selector
-provincias_lista = agrupado_Pumaconcolor['Provincia'].tolist()
+provincias_lista = agrupado_Pumaconcolor['Provincia'].unique().tolist()
 provincias_lista.sort()
 opciones_provincias = ['Todas'] + provincias_lista
 
@@ -119,19 +119,19 @@ st.subheader(f'Datos para la provincia {provincia_seleccionada}')
 st.dataframe(datos_filtrados)
 
 # %% [markdown]
-# ## Gráfico de Totales por Provincia
+# ## Gráfico de Totales por Provincia y Especie
 
-#Colores
+# Colores
 colores_hex = [
-    "#fff7ec",  
+    "#fff7ec",
     "#fee8c8",
     "#fdd49e",
     "#fdbb84",
     "#fc8d59",
     "#ef6548",
     "#d7301f",
-    "#b30000",  
-    "#7f0000"  
+    "#b30000",
+    "#7f0000"
 ]
 
 graf = px.bar(
@@ -151,7 +151,7 @@ st.plotly_chart(graf)
 if provincias is not None:
     # Vincular los datos con el GeoDataFrame
     provincias['Total avistamientos'] = provincias['provincia'].map(
-        datos_filtrados_agrupados.set_index('Provincia')['Total avistamientos']
+        datos_filtrados_agrupados.groupby('Provincia')['Total avistamientos'].sum()
     ).fillna(0)
 
     try:
@@ -167,9 +167,8 @@ if provincias is not None:
             }
         )
         st.subheader(f'Total de avistamientos de Puma concolor en {provincia_seleccionada if provincia_seleccionada != "Todas" else "Costa Rica"}')
-        st_folium(m_totales, width=700, height=600)
+        st_folium(m_totales, width=1000, height=1000)
     except Exception as e:
         st.error(f"Error al generar el mapa interactivo: {e}")
 else:
     st.error("No se pudieron cargar los datos geoespaciales.")
-
