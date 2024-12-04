@@ -1,5 +1,5 @@
 # %% [markdown]
-# # Ara Macao y Ara Ambiguus: Costa Rica
+# # Puma concolor: Costa Rica
 
 # %%
 import streamlit as st
@@ -11,39 +11,32 @@ from streamlit_folium import folium_static, st_folium
 
 # %%
 # Rutas de los datos
-Ara_MacaoAmbiguus = 'Aras/Macao_Ambiguus.csv'  # CSV de Ara Macao y Ara Ambiguus
-lim_provincias = 'Aras/provincias.gpkg'  # Archivo de límites provinciales
+Puma_concolor = 'Puma/puma_concolor.csv'  # CSV de Puma concolor
+lim_provincias = 'Puma/provincias.gpkg'  # Archivo de límites provinciales
 
 # %% [markdown]
-st.title('Ara Macao y Ara Ambiguus: Costa Rica')
-st.subheader('Geog. D. Santiago Brenes Salas (B81292)')
+st.title('Puma concolor: Costa Rica')
+st.subheader('Manuel Peralta Reyes')
 
 # %% [markdown]
 # ## Función para cargar y procesar datos
 
 @st.cache_data
-def cargar_Ara_MacaoAmbiguus():
+def cargar_Puma_concolor():
     try:
         # Cargar el archivo CSV con tabulaciones como delimitador
-        MacaoAmbiguus = pd.read_csv(Ara_MacaoAmbiguus, delimiter="\t")
+        Pumaconcolor = pd.read_csv(Puma_concolor, delimiter="\t")
         
         # Eliminar espacios adicionales de los nombres de las columnas
-        MacaoAmbiguus.columns = MacaoAmbiguus.columns.str.strip()
+        Pumaconcolor.columns = Pumaconcolor.columns.str.strip()
         
         # Reemplazar nombres de provincias para corregir inconsistencias
-        if 'Provincia' in MacaoAmbiguus.columns:
-            MacaoAmbiguus['Provincia'] = MacaoAmbiguus['Provincia'].replace({
+        if 'Provincia' in Pumaconcolor.columns:
+            Pumaconcolor['Provincia'] = Pumaconcolor['Provincia'].replace({
                 "Limon": "Limón",
                 "San Jose": "San José"
             })
         
-        # Filtrar registros de Ara ambiguus
-        MacaoAmbiguus = MacaoAmbiguus[MacaoAmbiguus['Nombre'] == 'Ara ambiguus']
-                
-        return MacaoAmbiguus
-    except Exception as e:
-        st.error(f"Error al cargar el archivo CSV: {e}")
-        return None
 
 # %% [markdown]
 # ## Función para cargar datos geoespaciales
