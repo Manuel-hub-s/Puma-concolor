@@ -121,13 +121,27 @@ st.dataframe(datos_filtrados)
 # %% [markdown]
 # ## Gráfico de Totales por Provincia
 
+#Colores
+colores_hex = [
+    "#fff7ec",  
+    "#fee8c8",
+    "#fdd49e",
+    "#fdbb84",
+    "#fc8d59",
+    "#ef6548",
+    "#d7301f",
+    "#b30000",  
+    "#7f0000"  
+]
+
 graf = px.bar(
     datos_filtrados_agrupados,
-    x='Provincia',
+    x='Especie',
     y='Total avistamientos',
     title=f'Totales de avistamientos en {provincia_seleccionada}',
-    labels={'Provincia': 'Provincia', 'Total avistamientos': 'Total de avistamientos'},
-    color='Provincia'
+    labels={'Especie': 'Especie', 'Total avistamientos': 'Total de avistamientos'},
+    color='Provincia',
+    color_discrete_sequence=colores_hex
 )
 st.plotly_chart(graf)
 
